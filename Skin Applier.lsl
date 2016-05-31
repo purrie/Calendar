@@ -25,11 +25,13 @@ state ApplySkin
 	}
 	listen(integer channel, string name, key id, string message)
 	{
+		if(llGetOwnerKey(id) != llGetOwner())
+			return;
 		list commands = llParseStringKeepNulls(message, [CMD_SEPARATOR], []);
 		switch(llList2String(commands, 0))
 		{
 			case CMD_DONE:
-				llDialog(llGetOwner(), "Texture set", [], CLDR_CHANNEL);
+				llDialog(llGetOwner(), "HUD detached, customizing texture finalized.", [], CLDR_CHANNEL);
 				state default;
 				break;
 			case CMD_TEXTURE:

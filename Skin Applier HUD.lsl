@@ -86,22 +86,32 @@ PickTexture()
 {
 	list params = llGetLinkPrimitiveParams(picker, [PRIM_TEXTURE, 4]);
 	string texture = llList2String(params, 0);
-	if(((key)texture) == NULL_KEY)
-		return;
+	if(((key)texture) != NULL_KEY)
 	if(Contains(textures, texture) == FALSE)
 	{
 		textures += texture;
-		params = llDeleteSubList(params, 0, 0);
-		params = llListInsertList(params, [PRIM_TEXTURE, 4, (string)NULL_KEY], 0);
-		llSetLinkPrimitiveParamsFast(picker, params);
 		llOwnerSay("Received a texture");
 	}
+	else
+	{
+		llOwnerSay("There was an issue obtaining the texture key, try putting the texture inside HUD's contents");
+	}
+	params = llDeleteSubList(params, 0, 0);
+	params = llListInsertList(params, [PRIM_TEXTURE, 4, (string)NULL_KEY], 0);
+	llSetLinkPrimitiveParamsFast(picker, params);
 }
 default
 {
 	state_entry()
 	{
 		Setup();
+		state HUD;
+	}
+}
+state HUD
+{
+	state_entry()
+	{
 		SetupTextures();
 	}
 	touch_start(integer num)
@@ -127,6 +137,10 @@ default
 			
 			RefreshTextures();
 		}
+		else if(button == picker)
+		{
+			state GrabTexture;
+		}
 		else
 		{
 			integer i = 0;
@@ -143,16 +157,6 @@ default
 			}
 		}
 	}
-	attach(key id)
-	{
-		if(id)
-		{
-		}
-		else
-		{
-			llWhisper(CLDR_CHANNEL, CMD_DONE);
-		}
-	}
 	changed(integer change)
 	{
 		if(change & CHANGED_INVENTORY)
@@ -164,5 +168,52 @@ default
 			PickTexture();
 			RefreshTextures();
 		}
+	}
+	attach(key id)
+	{
+		if(id)
+		{
+		
+		}
+		else
+		{
+			llWhisper(CLDR_CHANNEL, CMD_DONE + CMD_SEPARATOR + "0");
+		}
+	}
+}
+state GrabTexture
+{
+	state_entry()
+	{
+		llListen(CLDR_CHANNEL, "", llGetOwner(), "");
+		llTextBox(llGetOwner(), "Right click on a texture in your inventory to copy asset UUID and paste it into the text box below.", CLDR_CHANNEL);
+		llSetTimerEvent(120);
+	}
+	state_exit()
+	{
+		llSetTimerEvent(0);
+	}
+	touch_start(integer num)
+	{
+		llOwnerSay("Input box aborted");
+		state HUD;
+	}
+	listen(integer channel, string name, key id, string message)
+	{
+		key uuid = (key)message;
+		if(uuid)
+		{
+			if(Contains(textures, (string)uuid) == FALSE)
+			{
+				textures += uuid;
+				llOwnerSay("Texture added");
+				state HUD;
+			}
+		}
+	}
+	timer()
+	{
+		llOwnerSay("Text box expired, click the HUD to open it again");
+		state HUD;
 	}
 }
