@@ -41,7 +41,6 @@ Setup()
 }
 SetupTextures()
 {
-	pageOffset = 0;
 	integer count = llGetInventoryNumber(INVENTORY_TEXTURE);
 	while(count --> 0)
 	{
@@ -206,6 +205,13 @@ state GrabTexture
 			if(Contains(textures, (string)uuid) == FALSE)
 			{
 				textures += uuid;
+				integer lastPage = llGetListLength(textures);
+				integer part = lastPage % pageSize;
+				lastPage = (lastPage / pageSize);
+				if(part)
+					lastPage++;
+				pageOffset = lastPage - 1;
+				RefreshTextures();
 				llOwnerSay("Texture added");
 				state HUD;
 			}
